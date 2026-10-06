@@ -138,10 +138,16 @@ const pageRenderers = {
   contact: { title: 'تماس با ما', description: 'برای پرسش دربارهٔ پوشش یا بسته‌ها با سراج جاغوریان تماس بگیرید.', render: contactPage },
 };
 
-export function renderPage(pageKey) {
+export function renderPage(pageKey, { basePath = '' } = {}) {
   const page = pageRenderers[pageKey];
   if (!page) throw new Error(`Unknown page: ${pageKey}`);
-  return layout({ pageKey, title: page.title, description: page.description, body: page.render() });
+  const html = layout({ pageKey, title: page.title, description: page.description, body: page.render() });
+  const normalizedBasePath = basePath ? `/${basePath.split('/').filter(Boolean).join('/')}` : '';
+  if (!normalizedBasePath) return html;
+  return html.replace(/(href|src)="(\/(?!\/)[^"]*)"/g, (_match, attribute, url) => {
+    const prefixedUrl = url === '/' ? `${normalizedBasePath}/` : `${normalizedBasePath}${url}`;
+    return `${attribute}="${prefixedUrl}"`;
+  });
 }
 
 export { categories, packages, services, faqs, CONTACT };

@@ -15,6 +15,21 @@ async function buildTempSite() {
   return output;
 }
 
+test('supports the GitHub Pages project subpath on every route', async (t) => {
+  const output = await mkdtemp(path.join(tmpdir(), 'siraj-pages-site-'));
+  await buildSite(output, root, { basePath: '/seraj-jaghorians' });
+  t.after(() => rm(output, { recursive: true, force: true }));
+
+  for (const route of ['', 'about', 'services', 'packages', 'order', 'contact']) {
+    const html = await readFile(path.join(output, route, 'index.html'), 'utf8');
+    assert.match(html, /href="\/seraj-jaghorians\/assets\/site\.css"/);
+    assert.match(html, /src="\/seraj-jaghorians\/assets\/site\.js"/);
+    assert.match(html, /src="\/seraj-jaghorians\/assets\/siraj-jaghorians-logo\.png"/);
+    assert.match(html, /href="\/seraj-jaghorians\/about\/"/);
+    assert.doesNotMatch(html, /(?:href|src)="\/(?:assets|about|services|packages|contact)\//);
+  }
+});
+
 test('builds all six directly addressable Persian routes', async (t) => {
   const output = await buildTempSite();
   t.after(() => rm(output, { recursive: true, force: true }));
